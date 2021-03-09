@@ -1,5 +1,5 @@
 [package]
-name = "roguelike-tutorial"
+name = "chapter-06-monsters"
 version = "0.1.0"
 authors = ["liuweihu <6460176@qq.com>"]
 edition = "2018"
@@ -10,14 +10,3 @@ edition = "2018"
 rltk = { version = "0.8.0" }
 specs = "0.16.1"
 specs-derive = "0.4.1"
-
-
-[workspace]
-members = [
-    "chapter-01-hellorust",
-    "chapter-02-helloecs",
-    "chapter-03-walkmap",
-    "chapter-04-newmap",
-    "chapter-05-fov",
-    "chapter-06-monsters",
-]

@@ -2,11 +2,13 @@ mod component;
 mod player;
 mod map;
 mod rect;
+mod visibility_system;
 
 use rltk::{GameState, Rltk, RGB};
 use specs::prelude::*;
-use crate::component::*;
-use crate::map::*;
+use component::*;
+use map::*;
+use visibility_system::*;
 
 struct State {
     ecs: World
@@ -17,9 +19,8 @@ impl GameState for State {
         ctx.cls();
 
         player::player_input(self, ctx);
-
-        let map = self.ecs.fetch::<Vec<TileType>>();
-        draw_map(&map, ctx);
+        self.run_systems();
+        draw_map(&self.ecs,ctx);
 
         //读取 存储容器 中的组件。
         let positions = self.ecs.read_storage::<Position>();
@@ -29,6 +30,14 @@ impl GameState for State {
         for (pos, render) in (&positions, &renderables).join() {
             ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
         }
+    }
+}
+
+impl State {
+    fn run_systems(&mut self) {
+        let mut vis = VisibilitySystem{};
+        vis.run_now(&self.ecs);
+        self.ecs.maintain();
     }
 }
 
@@ -44,10 +53,11 @@ fn main() -> rltk::BError {
     gs.ecs.register::<Position>();
     gs.ecs.register::<Renderable>();
     gs.ecs.register::<Player>();
+    gs.ecs.register::<Viewshed>();
 
-    let (rooms, map) = new_map_rooms_and_corridors();
+    let map = Map::new_map_rooms_and_corridors();
+    let (player_x, player_y) = map.rooms[0].center();
     gs.ecs.insert(map);
-    let (player_x, player_y) = rooms[0].center();
 
     //创建实体
     gs.ecs
@@ -59,6 +69,7 @@ fn main() -> rltk::BError {
             bg: RGB::named(rltk::BLACK),
         })
         .with(Player{})
+        .with(Viewshed{ visible_tiles: Vec::new(), range: 8, dirty: true})
         .build();
 
     rltk::main_loop(context, gs)

@@ -6,22 +6,24 @@ use std::cmp::{min, max};
 use crate::{
         State,
         Rltk,
-        component::{Position, Player},
-        map::TileType,
+        component::*,
+        map::*,
 };
-use crate::map::xy_idx;
 
 //键盘移动
 fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
     let mut postions = ecs.write_storage::<Position>();
     let mut players = ecs.write_storage::<Player>();
-    let map = ecs.fetch::<Vec<TileType>>();
+    let mut viewsheds = ecs.write_storage::<Viewshed>();
+    let map = ecs.fetch::<Map>();
 
-    for (_player, pos) in (&mut players, &mut postions).join() {
-        let idx = xy_idx(pos.x+ delta_x, pos.y+ delta_y);
-        if map[idx] != TileType::Wall {
+    for (_player, pos, viewshed) in (&mut players, &mut postions, &mut viewsheds).join() {
+        let idx = map.xy_idx(pos.x+ delta_x, pos.y+ delta_y);
+        if map.tiles[idx] != TileType::Wall {
             pos.x = min(79, max(0, pos.x + delta_x));
             pos.y = min(49, max(0, pos.y + delta_y));
+
+            viewshed.dirty = true;
         }
     }
 }
